@@ -3,7 +3,7 @@ import 'dart:io';
 import '../models/task.dart';
 
 class FileManager {
-  static Future<List<Task>> loadTasks(String filePath) async {
+   static Future<List<Task>> loadTasks(String filePath) async {
     final file = File(filePath);
 
     if (!await file.exists()) {
@@ -19,5 +19,16 @@ class FileManager {
     return jsonList
         .map((item) => Task.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+   static Future<void> saveTasks(String filePath, List<Task> tasks) async {
+    final file = File(filePath);
+
+     final List<Map<String, dynamic>> jsonList =
+        tasks.map((task) => task.toJson()).toList();
+
+     final String jsonString = jsonEncode(jsonList);
+
+     await file.writeAsString(jsonString);
   }
 }
