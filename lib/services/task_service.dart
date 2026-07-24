@@ -1,3 +1,5 @@
+import 'package:dart_taskmanagement/models/urgent_task.dart';
+
 class TaskService {
   final TaskRepository _repository = TaskRepository();
 
@@ -15,21 +17,19 @@ class TaskService {
     await FileManager.saveTasks(_filePath, tasks);
   }
 
-   void addTask(Task task) {
+  void addTask(Task task) {
     _repository.create(task);
   }
 
- 
   List<Task> getAllTasks() {
     return _repository.readAll();
   }
 
- 
   void deleteTask(String id) {
     _repository.deleteTask(id);
   }
 
-   void completeTask(String id) {
+  void completeTask(String id) {
     final task = _repository.readById(id);
     if (task != null) {
       task.isDone = true;
@@ -40,6 +40,19 @@ class TaskService {
   List<Task> getSortedTasksByPriority() {
     final tasks = _repository.readAll();
     tasks.sort((a, b) => a.priority.compareTo(b.priority));
+    return tasks;
+  }
+
+  void addUrgentTask(String id, String title) {
+    final urgentTask = UrgentTask(id: id, title: title);
+    _repository.create(urgentTask);
+  }
+
+  List<Task> displayAllTasks() {
+    final tasks = _repository.readAll();
+    for (var task in tasks) {
+      print(task.getDetails());
+    }
     return tasks;
   }
 }
