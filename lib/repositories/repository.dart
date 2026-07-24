@@ -6,7 +6,7 @@ abstract interface class Repository<T> {
 
   T? readById(String id);  
 
-  void update(String id, T item); 
+  void updateTask(String id, T item); 
 
-  void delete(String id);  
+  void deleteTask(String id);  
 }
