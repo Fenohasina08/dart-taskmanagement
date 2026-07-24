@@ -1,6 +1,6 @@
 import '../enums/priority.dart';
 
-class Task {
+abstract class Task {
   final String id;
   String title;
   final Priority priority;
@@ -14,4 +14,6 @@ class Task {
     this.dueDate,
     this.isCompleted = false, 
   });
+
+  String getDetails();
 }
