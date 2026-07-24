@@ -27,4 +27,16 @@ class UrgentTask extends Task {
       'isCompleted': isCompleted,
     };
   }
+
+  factory UrgentTask.fromJson(Map<String, dynamic> json) {
+    return UrgentTask(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      priority: Priority.values.byName(json['priority'] as String),
+      dueDate: json['dueDate'] != null 
+      ? DateTime.parse(json['dueDate'] as String) 
+      : null,
+      isCompleted: json['isCompleted'] as bool? ?? false,
+    );
+  }
 }
