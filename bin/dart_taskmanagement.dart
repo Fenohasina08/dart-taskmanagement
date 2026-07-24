@@ -1,4 +1,6 @@
 import 'package:args/args.dart';
+import 'package:dart_taskmanagement/services/task_service.dart';
+import 'package:dart_taskmanagement/exceptions/task_not_found_exception.dart';
 
 const String version = '0.0.1';
 
@@ -53,5 +55,12 @@ void main(List<String> arguments) {
     print(e.message);
     print('');
     printUsage(argParser);
+  }
+
+  final service = TaskService();
+  try {
+    service.markAsCompleted('task1');
+     } on TaskNotFoundException catch (e) {
+    print('Error: $e');
   }
 }

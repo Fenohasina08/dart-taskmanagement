@@ -1,4 +1,6 @@
 import 'package:dart_taskmanagement/models/urgent_task.dart';
+import '../exceptions/task_not_found_exception.dart';
+import '../models/task.dart';
 
 class TaskService {
   final TaskRepository _repository = TaskRepository();
@@ -54,5 +56,35 @@ class TaskService {
       print(task.getDetails());
     }
     return tasks;
+  }
+
+  List<Task> sortByPriority() {
+    final tasks = _repository.readAll();
+    tasks.sort((a, b) => b.priority.index - a.priority.index);
+    return tasks;
+  }
+
+  List<Task> sortByDueDate() {
+    final tasks = _repository.readAll();
+    tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    return tasks;
+  }
+
+  void markAsCompleted(String id) {
+    final task = _repository.readById(id);
+    if (task != null) {
+      task.isCompleted = true;
+      _repository.updateTask(id, task);
+    } else {
+      throw TaskNotFoundException();
+    }
+  }
+
+  void deleteTaskById(String id) {
+    if (_repository.readById(id) == null) {
+      throw TaskNotFoundException();
+    } else {
+      _repository.deleteTask(id);
+    }
   }
 }
