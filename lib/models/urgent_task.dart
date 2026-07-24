@@ -1,16 +1,19 @@
-class UrgentTask  extends Task{
-  //NomDeLaClasseEnfant({
-//   required super.premierAttribut,
-//   required super.deuxiemeAttribut,
-//   super.attributOptionnel,
-//   super.attributAvecValeurParDefaut = Valeur,
-// });
+import '../enums/priority.dart';
+import 'task.dart';
 
- UrgentTask({
+class UrgentTask extends Task {
+  UrgentTask({
     required super.id,
     required super.title,
-    required super.priority,
-    super.isCompleted = false,
+    super.priority = Priority.high, 
+    super.dueDate,
+    super.isCompleted,
   });
 
+  @override
+  String getDetails() {
+    final date = dueDate?.toIso8601String() ?? 'Nothing';
+    final status = isCompleted ? 'do' : 'To do ';
+    return ' URGENT [#$id] $title | Priorité: ${priority.name} | Échéance: $date | Statut: $status';
+  }
 }
