@@ -16,4 +16,15 @@ class UrgentTask extends Task {
     final status = isCompleted ? 'do' : 'To do ';
     return ' URGENT [#$id] $title | Priorité: ${priority.name} | Échéance: $date | Statut: $status';
   }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'priority': priority.name,
+      'dueDate': dueDate?.toIso8601String(),
+      'isCompleted': isCompleted,
+    };
+  }
 }
