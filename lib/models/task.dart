@@ -1,6 +1,7 @@
 import '../enums/priority.dart';
+import '../interfaces/json_serializable.dart';
 
-abstract class Task implementents JsonSerializable {
+abstract class Task implements JsonSerializable {
   final String id;
   String title;
   final Priority priority;
