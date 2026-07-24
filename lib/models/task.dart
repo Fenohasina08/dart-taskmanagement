@@ -4,15 +4,15 @@ abstract class Task {
   final String id;
   String title;
   final Priority priority;
-  DateTime? dueDate ;
-  bool isCompleted;  
+  DateTime? dueDate;
+  bool isCompleted;
 
-   Task({
+  Task({
     required this.id,
     required this.title,
     required this.priority,
     this.dueDate,
-    this.isCompleted = false, 
+    this.isCompleted = false,
   });
 
   String getDetails();
