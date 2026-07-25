@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:dart_taskmanagement/enums/priority.dart';
+import 'package:dart_taskmanagement/exceptions/storage_exception.dart';
 import 'package:dart_taskmanagement/exceptions/task_not_found_exception.dart';
-import 'package:dart_taskmanagement/models/task.dart';
+import 'package:dart_taskmanagement/models/urgent_task.dart';
 import 'package:dart_taskmanagement/services/task_service.dart';
 
 const String version = '0.0.1';
@@ -29,12 +31,43 @@ void printUsage(ArgParser argParser) {
   print(argParser.usage);
 }
 
+Priority askPriority() {
+  print('1. Low');
+  print('2. Medium');
+  print('3. High');
+  stdout.write('Choose priority: ');
+  final choice = stdin.readLineSync();
+  switch (choice) {
+    case '1':
+      return Priority.low;
+    case '2':
+      return Priority.medium;
+    case '3':
+      return Priority.high;
+    default:
+      return Priority.high;
+  }
+}
+
+DateTime? askDueDate() {
+  stdout.write('Enter due date (YYYY-MM-DD) or leave empty: ');
+  final input = stdin.readLineSync();
+  if (input == null || input.trim().isEmpty) {
+    return null;
+  }
+  try {
+    return DateTime.parse(input.trim());
+  } on FormatException {
+    print('Invalid date format, due date ignored.');
+    return null;
+  }
+}
+
 Future<void> main(List<String> arguments) async {
   final ArgParser argParser = buildParser();
 
   try {
     final ArgResults results = argParser.parse(arguments);
-    bool verbose = false;
 
     if (results.flag('help')) {
       printUsage(argParser);
@@ -44,22 +77,20 @@ Future<void> main(List<String> arguments) async {
       print('dart_taskmanagement version: $version');
       return;
     }
-    if (results.flag('verbose')) {
-      verbose = true;
-    }
-
-    print('Positional arguments: ${results.rest}');
-    if (verbose) {
-      print('[VERBOSE] All arguments: ${results.arguments}');
-    }
   } on FormatException catch (e) {
     print(e.message);
     print('');
     printUsage(argParser);
+    return;
   }
 
   final service = TaskService();
-  await service.loadTasks();
+
+  try {
+    await service.loadTasks();
+  } on StorageException catch (e) {
+    print(e.toString());
+  }
 
   bool isRunning = true;
 
@@ -83,10 +114,22 @@ Future<void> main(List<String> arguments) async {
         String? title = stdin.readLineSync();
 
         if (id != null && id.isNotEmpty && title != null && title.isNotEmpty) {
-          final newTask = Task(id: id, title: title);
-          service.addTask(newTask);
-          await service.saveTasks();
-          print('Task added successfully!');
+          final priority = askPriority();
+          final dueDate = askDueDate();
+          final newTask = UrgentTask(
+            id: id,
+            title: title,
+            priority: priority,
+            dueDate: dueDate,
+          );
+
+          try {
+            service.addTask(newTask);
+            await service.saveTasks();
+            print('Task added successfully!');
+          } on StorageException catch (e) {
+            print(e.toString());
+          }
         } else {
           print('Invalid input.');
         }
@@ -127,6 +170,8 @@ Future<void> main(List<String> arguments) async {
             print('Task marked as completed!');
           } on TaskNotFoundException {
             print('Error: Task not found.');
+          } on StorageException catch (e) {
+            print(e.toString());
           }
         }
         break;
@@ -143,6 +188,8 @@ Future<void> main(List<String> arguments) async {
             print('Task deleted successfully!');
           } on TaskNotFoundException {
             print('Error: Task not found.');
+          } on StorageException catch (e) {
+            print(e.toString());
           }
         }
         break;
@@ -150,7 +197,11 @@ Future<void> main(List<String> arguments) async {
       case '6':
         isRunning = false;
         print('Exiting the program.');
-        await service.saveTasks();
+        try {
+          await service.saveTasks();
+        } on StorageException catch (e) {
+          print(e.toString());
+        }
         break;
 
       default:

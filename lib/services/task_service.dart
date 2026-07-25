@@ -1,6 +1,7 @@
-import 'package:dart_taskmanagement/models/urgent_task.dart';
 import '../exceptions/task_not_found_exception.dart';
 import '../models/task.dart';
+import '../repositories/task_repository.dart';
+import '../utils/file_manager.dart';
 
 class TaskService {
   final TaskRepository _repository = TaskRepository();
@@ -27,31 +28,12 @@ class TaskService {
     return _repository.readAll();
   }
 
-  void deleteTask(String id) {
-    _repository.deleteTask(id);
-  }
-
-  void completeTask(String id) {
-    final task = _repository.readById(id);
-    if (task != null) {
-      task.isDone = true;
-      _repository.updateTask(id, task);
-    }
-  }
-
-  List<Task> getSortedTasksByPriority() {
-    final tasks = _repository.readAll();
-    tasks.sort((a, b) => a.priority.compareTo(b.priority));
-    return tasks;
-  }
-
-  void addUrgentTask(String id, String title) {
-    final urgentTask = UrgentTask(id: id, title: title);
-    _repository.create(urgentTask);
-  }
-
   List<Task> displayAllTasks() {
     final tasks = _repository.readAll();
+    if (tasks.isEmpty) {
+      print('No tasks found.');
+      return tasks;
+    }
     for (var task in tasks) {
       print(task.getDetails());
     }
@@ -59,32 +41,35 @@ class TaskService {
   }
 
   List<Task> sortByPriority() {
-    final tasks = _repository.readAll();
+    final tasks = List<Task>.from(_repository.readAll());
     tasks.sort((a, b) => b.priority.index - a.priority.index);
     return tasks;
   }
 
   List<Task> sortByDueDate() {
-    final tasks = _repository.readAll();
-    tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final tasks = List<Task>.from(_repository.readAll());
+    tasks.sort((a, b) {
+      if (a.dueDate == null && b.dueDate == null) return 0;
+      if (a.dueDate == null) return 1;
+      if (b.dueDate == null) return -1;
+      return a.dueDate!.compareTo(b.dueDate!);
+    });
     return tasks;
   }
 
   void markAsCompleted(String id) {
     final task = _repository.readById(id);
-    if (task != null) {
-      task.isCompleted = true;
-      _repository.updateTask(id, task);
-    } else {
+    if (task == null) {
       throw TaskNotFoundException();
     }
+    task.isCompleted = true;
+    _repository.updateTask(id, task);
   }
 
   void deleteTaskById(String id) {
     if (_repository.readById(id) == null) {
       throw TaskNotFoundException();
-    } else {
-      _repository.deleteTask(id);
     }
+    _repository.deleteTask(id);
   }
 }

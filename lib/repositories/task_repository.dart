@@ -1,5 +1,8 @@
+import 'package:dart_taskmanagement/repositories/repository.dart';
+import '../models/task.dart';
+
 class TaskRepository implements Repository<Task> {
-   final List<Task> _items = [];
+  final List<Task> _items = [];
 
   @override
   Task create(Task item) {
@@ -14,18 +17,19 @@ class TaskRepository implements Repository<Task> {
 
   @override
   Task? readById(String id) {
-    try {
-      return _items.firstWhere((item) => item.id == id);
-    } catch (_) {
-      return null;  
+    for (final item in _items) {
+      if (item.id == id) {
+        return item;
+      }
     }
+    return null;
   }
 
   @override
   void updateTask(String id, Task item) {
     final index = _items.indexWhere((element) => element.id == id);
     if (index != -1) {
-      _items[index] = item; 
+      _items[index] = item;
     }
   }
 

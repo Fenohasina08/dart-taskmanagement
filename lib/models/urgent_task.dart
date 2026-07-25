@@ -1,11 +1,12 @@
 import '../enums/priority.dart';
+import '../exceptions/invalid_priority_exception.dart';
 import 'task.dart';
 
 class UrgentTask extends Task {
   UrgentTask({
     required super.id,
     required super.title,
-    super.priority = Priority.high, 
+    super.priority = Priority.high,
     super.dueDate,
     super.isCompleted,
   });
@@ -13,8 +14,9 @@ class UrgentTask extends Task {
   @override
   String getDetails() {
     final date = dueDate?.toIso8601String() ?? 'Nothing';
-    final status = isCompleted ? 'do' : 'To do ';
-    return ' URGENT [#$id] $title | Priorité: ${priority.name} | Échéance: $date | Statut: $status';
+    final status = isCompleted ? 'Done' : 'To do';
+    final label = priority == Priority.high ? 'URGENT' : 'TASK';
+    return '$label [#$id] $title | Priorité: ${priority.name} | Échéance: $date | Statut: $status';
   }
 
   @override
@@ -29,13 +31,21 @@ class UrgentTask extends Task {
   }
 
   factory UrgentTask.fromJson(Map<String, dynamic> json) {
+    final priorityName = json['priority'] as String;
+    Priority priority;
+    try {
+      priority = Priority.values.byName(priorityName);
+    } catch (_) {
+      throw InvalidPriorityException();
+    }
+
     return UrgentTask(
       id: json['id'] as String,
       title: json['title'] as String,
-      priority: Priority.values.byName(json['priority'] as String),
-      dueDate: json['dueDate'] != null 
-      ? DateTime.parse(json['dueDate'] as String) 
-      : null,
+      priority: priority,
+      dueDate: json['dueDate'] != null
+          ? DateTime.parse(json['dueDate'] as String)
+          : null,
       isCompleted: json['isCompleted'] as bool? ?? false,
     );
   }
