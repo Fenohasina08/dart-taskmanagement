@@ -1,23 +1,19 @@
 import '../exceptions/task_not_found_exception.dart';
 import '../models/task.dart';
 import '../repositories/task_repository.dart';
-import '../utils/file_manager.dart';
 
 class TaskService {
-  final TaskRepository _repository = TaskRepository();
+  final TaskRepository _repository;
 
-  static const String _filePath = 'data/tasks.json';
+  TaskService({TaskRepository? repository})
+    : _repository = repository ?? TaskRepository();
 
   Future<void> loadTasks() async {
-    final tasks = await FileManager.loadTasks(_filePath);
-    for (var task in tasks) {
-      _repository.create(task);
-    }
+    await _repository.loadFromFile();
   }
 
   Future<void> saveTasks() async {
-    final tasks = _repository.readAll();
-    await FileManager.saveTasks(_filePath, tasks);
+    await _repository.saveToFile();
   }
 
   void addTask(Task task) {
@@ -28,16 +24,8 @@ class TaskService {
     return _repository.readAll();
   }
 
-  List<Task> displayAllTasks() {
-    final tasks = _repository.readAll();
-    if (tasks.isEmpty) {
-      print('No tasks found.');
-      return tasks;
-    }
-    for (var task in tasks) {
-      print(task.getDetails());
-    }
-    return tasks;
+  List<String> listTaskDetails() {
+    return _repository.readAll().map((task) => task.getDetails()).toList();
   }
 
   List<Task> sortByPriority() {

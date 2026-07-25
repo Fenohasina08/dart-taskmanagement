@@ -63,6 +63,16 @@ DateTime? askDueDate() {
   }
 }
 
+void printTaskList(List<String> lines) {
+  if (lines.isEmpty) {
+    print('No tasks found.');
+    return;
+  }
+  for (var line in lines) {
+    print(line);
+  }
+}
+
 Future<void> main(List<String> arguments) async {
   final ArgParser argParser = buildParser();
 
@@ -136,7 +146,7 @@ Future<void> main(List<String> arguments) async {
         break;
 
       case '2':
-        service.displayAllTasks();
+        printTaskList(service.listTaskDetails());
         break;
 
       case '3':
@@ -147,19 +157,15 @@ Future<void> main(List<String> arguments) async {
 
         if (sortChoice == '1') {
           final sorted = service.sortByPriority();
-          for (var task in sorted) {
-            print(task.getDetails());
-          }
+          printTaskList(sorted.map((task) => task.getDetails()).toList());
         } else if (sortChoice == '2') {
           final sorted = service.sortByDueDate();
-          for (var task in sorted) {
-            print(task.getDetails());
-          }
+          printTaskList(sorted.map((task) => task.getDetails()).toList());
         }
         break;
 
       case '4':
-        service.displayAllTasks();
+        printTaskList(service.listTaskDetails());
         stdout.write('Enter task ID to mark as completed: ');
         String? id = stdin.readLineSync();
 
@@ -177,7 +183,7 @@ Future<void> main(List<String> arguments) async {
         break;
 
       case '5':
-        service.displayAllTasks();
+        printTaskList(service.listTaskDetails());
         stdout.write('Enter task ID to delete: ');
         String? id = stdin.readLineSync();
 
