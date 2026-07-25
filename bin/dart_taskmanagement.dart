@@ -59,12 +59,7 @@ void main(List<String> arguments) {
     printUsage(argParser);
   }
 
-  final service = TaskService();
-  try {
-    service.markAsCompleted('task1');
-  } on TaskNotFoundException catch (e) {
-    print('Error: $e');
-  }
+  
 
   bool isRunning = true;
 
