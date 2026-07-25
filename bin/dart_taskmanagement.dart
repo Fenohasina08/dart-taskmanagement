@@ -1,6 +1,8 @@
 import 'package:args/args.dart';
 import 'package:dart_taskmanagement/services/task_service.dart';
 import 'package:dart_taskmanagement/exceptions/task_not_found_exception.dart';
+import 'dart:io';
+import 'package:dart_taskmanagement/models/task.dart';
 
 const String version = '0.0.1';
 
@@ -60,7 +62,94 @@ void main(List<String> arguments) {
   final service = TaskService();
   try {
     service.markAsCompleted('task1');
-     } on TaskNotFoundException catch (e) {
+  } on TaskNotFoundException catch (e) {
     print('Error: $e');
+  }
+
+  bool isRunning = true;
+
+  while (isRunning) {
+    print('\n--- TASK MENU ---');
+    print('1. Add task');
+    print('2. List tasks');
+    print('3. Sort tasks');
+    print('4. Complete task');
+    print('5. Delete task');
+    print('6. Exit');
+    stdout.write('Your choice: ');
+
+    String? choice = stdin.readLineSync();
+
+    switch (choice) {
+      case '1':
+        // 📝 Lecture des informations au clavier
+        stdout.write('Enter task ID: ');
+        String? id = stdin.readLineSync();
+        stdout.write('Enter task title: ');
+        String? title = stdin.readLineSync();
+
+        if (id != null && id.isNotEmpty && title != null && title.isNotEmpty) {
+          final newTask = Task(id: id, title: title);
+          service.addTask(newTask);
+          print('Task added successfully!');
+        } else {
+          print('Invalid input.');
+        }
+        break;
+
+      case '2':
+        service.displayAllTasks();
+        break;
+
+      case '3':
+        print('1. Sort by priority');
+        print('2. Sort by due date');
+        stdout.write('Choose sorting option: ');
+        String? sortChoice = stdin.readLineSync();
+        if (sortChoice == '1') {
+          final sorted = service.sortByPriority();
+          for (var task in sorted) print(task.getDetails());
+        } else if (sortChoice == '2') {
+          final sorted = service.sortByDueDate();
+          for (var task in sorted) print(task.getDetails());
+        }
+        break;
+
+      case '4':
+        service.displayAllTasks();
+        stdout.write('Enter task ID to mark as completed: ');
+        String? id = stdin.readLineSync();
+        if (id != null && id.isNotEmpty) {
+          try {
+            service.markAsCompleted(id);
+            print('Task marked as completed!');
+          } on TaskNotFoundException {
+            print('Error: Task not found.');
+          }
+        }
+        break;
+
+      case '5':
+        service.displayAllTasks();
+        stdout.write('Enter task ID to delete: ');
+        String? id = stdin.readLineSync();
+        if (id != null && id.isNotEmpty) {
+          try {
+            service.deleteTaskById(id);
+            print('Task deleted successfully!');
+          } on TaskNotFoundException {
+            print('Error: Task not found.');
+          }
+        }
+        break;
+
+      case '6':
+        isRunning = false;
+        print('Exiting the program.');
+        break;
+
+      default:
+        print('Invalid choice. Please try again.');
+    }
   }
 }
