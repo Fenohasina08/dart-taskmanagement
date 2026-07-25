@@ -1,8 +1,23 @@
 import 'package:dart_taskmanagement/repositories/repository.dart';
 import '../models/task.dart';
+import '../utils/file_manager.dart';
 
 class TaskRepository implements Repository<Task> {
   final List<Task> _items = [];
+  final String filePath;
+
+  TaskRepository({this.filePath = 'data/tasks.json'});
+
+  Future<void> loadFromFile() async {
+    final tasks = await FileManager.loadTasks(filePath);
+    _items
+      ..clear()
+      ..addAll(tasks);
+  }
+
+  Future<void> saveToFile() async {
+    await FileManager.saveTasks(filePath, _items);
+  }
 
   @override
   Task create(Task item) {

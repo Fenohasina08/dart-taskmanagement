@@ -65,6 +65,16 @@ void main() {
       expect(sorted[2].priority, Priority.low);
     });
 
+    test('listTaskDetails retourne les descriptions formatées', () {
+      service.addTask(UrgentTask(id: '1', title: 'Tâche A'));
+      service.addTask(UrgentTask(id: '2', title: 'Tâche B'));
+
+      final details = service.listTaskDetails();
+
+      expect(details, hasLength(2));
+      expect(details.first, contains('Tâche A'));
+    });
+
     test('sortByDueDate trie par ordre chronologique', () {
       service.addTask(UrgentTask(id: '1', title: 'Plus tard', dueDate: DateTime(2026, 12, 1)));
       service.addTask(UrgentTask(id: '2', title: 'Bientôt', dueDate: DateTime(2026, 1, 1)));
