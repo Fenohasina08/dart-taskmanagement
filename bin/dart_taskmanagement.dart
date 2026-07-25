@@ -1,4 +1,11 @@
+import 'dart:io';
+
 import 'package:args/args.dart';
+import 'package:dart_taskmanagement/enums/priority.dart';
+import 'package:dart_taskmanagement/exceptions/storage_exception.dart';
+import 'package:dart_taskmanagement/exceptions/task_not_found_exception.dart';
+import 'package:dart_taskmanagement/models/urgent_task.dart';
+import 'package:dart_taskmanagement/services/task_service.dart';
 
 const String version = '0.0.1';
 
@@ -24,13 +31,44 @@ void printUsage(ArgParser argParser) {
   print(argParser.usage);
 }
 
-void main(List<String> arguments) {
+Priority askPriority() {
+  print('1. Low');
+  print('2. Medium');
+  print('3. High');
+  stdout.write('Choose priority: ');
+  final choice = stdin.readLineSync();
+  switch (choice) {
+    case '1':
+      return Priority.low;
+    case '2':
+      return Priority.medium;
+    case '3':
+      return Priority.high;
+    default:
+      return Priority.high;
+  }
+}
+
+DateTime? askDueDate() {
+  stdout.write('Enter due date (YYYY-MM-DD) or leave empty: ');
+  final input = stdin.readLineSync();
+  if (input == null || input.trim().isEmpty) {
+    return null;
+  }
+  try {
+    return DateTime.parse(input.trim());
+  } on FormatException {
+    print('Invalid date format, due date ignored.');
+    return null;
+  }
+}
+
+Future<void> main(List<String> arguments) async {
   final ArgParser argParser = buildParser();
+
   try {
     final ArgResults results = argParser.parse(arguments);
-    bool verbose = false;
 
-    // Process the parsed arguments.
     if (results.flag('help')) {
       printUsage(argParser);
       return;
@@ -39,19 +77,135 @@ void main(List<String> arguments) {
       print('dart_taskmanagement version: $version');
       return;
     }
-    if (results.flag('verbose')) {
-      verbose = true;
-    }
-
-    // Act on the arguments provided.
-    print('Positional arguments: ${results.rest}');
-    if (verbose) {
-      print('[VERBOSE] All arguments: ${results.arguments}');
-    }
   } on FormatException catch (e) {
-    // Print usage information if an invalid argument was provided.
     print(e.message);
     print('');
     printUsage(argParser);
+    return;
+  }
+
+  final service = TaskService();
+
+  try {
+    await service.loadTasks();
+  } on StorageException catch (e) {
+    print(e.toString());
+  }
+
+  bool isRunning = true;
+
+  while (isRunning) {
+    print('\n--- TASK MENU ---');
+    print('1. Add task');
+    print('2. List tasks');
+    print('3. Sort tasks');
+    print('4. Complete task');
+    print('5. Delete task');
+    print('6. Exit');
+    stdout.write('Your choice: ');
+
+    String? choice = stdin.readLineSync();
+
+    switch (choice) {
+      case '1':
+        stdout.write('Enter task ID: ');
+        String? id = stdin.readLineSync();
+        stdout.write('Enter task title: ');
+        String? title = stdin.readLineSync();
+
+        if (id != null && id.isNotEmpty && title != null && title.isNotEmpty) {
+          final priority = askPriority();
+          final dueDate = askDueDate();
+          final newTask = UrgentTask(
+            id: id,
+            title: title,
+            priority: priority,
+            dueDate: dueDate,
+          );
+
+          try {
+            service.addTask(newTask);
+            await service.saveTasks();
+            print('Task added successfully!');
+          } on StorageException catch (e) {
+            print(e.toString());
+          }
+        } else {
+          print('Invalid input.');
+        }
+        break;
+
+      case '2':
+        service.displayAllTasks();
+        break;
+
+      case '3':
+        print('1. Sort by priority');
+        print('2. Sort by due date');
+        stdout.write('Choose sorting option: ');
+        String? sortChoice = stdin.readLineSync();
+
+        if (sortChoice == '1') {
+          final sorted = service.sortByPriority();
+          for (var task in sorted) {
+            print(task.getDetails());
+          }
+        } else if (sortChoice == '2') {
+          final sorted = service.sortByDueDate();
+          for (var task in sorted) {
+            print(task.getDetails());
+          }
+        }
+        break;
+
+      case '4':
+        service.displayAllTasks();
+        stdout.write('Enter task ID to mark as completed: ');
+        String? id = stdin.readLineSync();
+
+        if (id != null && id.isNotEmpty) {
+          try {
+            service.markAsCompleted(id);
+            await service.saveTasks();
+            print('Task marked as completed!');
+          } on TaskNotFoundException {
+            print('Error: Task not found.');
+          } on StorageException catch (e) {
+            print(e.toString());
+          }
+        }
+        break;
+
+      case '5':
+        service.displayAllTasks();
+        stdout.write('Enter task ID to delete: ');
+        String? id = stdin.readLineSync();
+
+        if (id != null && id.isNotEmpty) {
+          try {
+            service.deleteTaskById(id);
+            await service.saveTasks();
+            print('Task deleted successfully!');
+          } on TaskNotFoundException {
+            print('Error: Task not found.');
+          } on StorageException catch (e) {
+            print(e.toString());
+          }
+        }
+        break;
+
+      case '6':
+        isRunning = false;
+        print('Exiting the program.');
+        try {
+          await service.saveTasks();
+        } on StorageException catch (e) {
+          print(e.toString());
+        }
+        break;
+
+      default:
+        print('Invalid choice. Please try again.');
+    }
   }
 }
