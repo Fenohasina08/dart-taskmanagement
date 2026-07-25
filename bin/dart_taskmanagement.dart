@@ -1,8 +1,9 @@
-import 'package:args/args.dart';
-import 'package:dart_taskmanagement/services/task_service.dart';
-import 'package:dart_taskmanagement/exceptions/task_not_found_exception.dart';
 import 'dart:io';
+
+import 'package:args/args.dart';
+import 'package:dart_taskmanagement/exceptions/task_not_found_exception.dart';
 import 'package:dart_taskmanagement/models/task.dart';
+import 'package:dart_taskmanagement/services/task_service.dart';
 
 const String version = '0.0.1';
 
@@ -28,13 +29,13 @@ void printUsage(ArgParser argParser) {
   print(argParser.usage);
 }
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
   final ArgParser argParser = buildParser();
+
   try {
     final ArgResults results = argParser.parse(arguments);
     bool verbose = false;
 
-    // Process the parsed arguments.
     if (results.flag('help')) {
       printUsage(argParser);
       return;
@@ -47,19 +48,18 @@ void main(List<String> arguments) {
       verbose = true;
     }
 
-    // Act on the arguments provided.
     print('Positional arguments: ${results.rest}');
     if (verbose) {
       print('[VERBOSE] All arguments: ${results.arguments}');
     }
   } on FormatException catch (e) {
-    // Print usage information if an invalid argument was provided.
     print(e.message);
     print('');
     printUsage(argParser);
   }
 
-  
+  final service = TaskService();
+  await service.loadTasks();
 
   bool isRunning = true;
 
@@ -77,7 +77,6 @@ void main(List<String> arguments) {
 
     switch (choice) {
       case '1':
-        // 📝 Lecture des informations au clavier
         stdout.write('Enter task ID: ');
         String? id = stdin.readLineSync();
         stdout.write('Enter task title: ');
@@ -86,6 +85,7 @@ void main(List<String> arguments) {
         if (id != null && id.isNotEmpty && title != null && title.isNotEmpty) {
           final newTask = Task(id: id, title: title);
           service.addTask(newTask);
+          await service.saveTasks();
           print('Task added successfully!');
         } else {
           print('Invalid input.');
@@ -101,12 +101,17 @@ void main(List<String> arguments) {
         print('2. Sort by due date');
         stdout.write('Choose sorting option: ');
         String? sortChoice = stdin.readLineSync();
+
         if (sortChoice == '1') {
           final sorted = service.sortByPriority();
-          for (var task in sorted) print(task.getDetails());
+          for (var task in sorted) {
+            print(task.getDetails());
+          }
         } else if (sortChoice == '2') {
           final sorted = service.sortByDueDate();
-          for (var task in sorted) print(task.getDetails());
+          for (var task in sorted) {
+            print(task.getDetails());
+          }
         }
         break;
 
@@ -114,9 +119,11 @@ void main(List<String> arguments) {
         service.displayAllTasks();
         stdout.write('Enter task ID to mark as completed: ');
         String? id = stdin.readLineSync();
+
         if (id != null && id.isNotEmpty) {
           try {
             service.markAsCompleted(id);
+            await service.saveTasks();
             print('Task marked as completed!');
           } on TaskNotFoundException {
             print('Error: Task not found.');
@@ -128,9 +135,11 @@ void main(List<String> arguments) {
         service.displayAllTasks();
         stdout.write('Enter task ID to delete: ');
         String? id = stdin.readLineSync();
+
         if (id != null && id.isNotEmpty) {
           try {
             service.deleteTaskById(id);
+            await service.saveTasks();
             print('Task deleted successfully!');
           } on TaskNotFoundException {
             print('Error: Task not found.');
@@ -141,6 +150,7 @@ void main(List<String> arguments) {
       case '6':
         isRunning = false;
         print('Exiting the program.');
+        await service.saveTasks();
         break;
 
       default:
