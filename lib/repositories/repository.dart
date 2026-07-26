@@ -1,4 +1,4 @@
-abstract interface class Repository<T> { 
+abstract class Repository<T> { 
 
   T create(T item);  
 
