@@ -20,7 +20,7 @@ A command-line task management application built in pure Dart (no Flutter), demo
 Clone the repository and install dependencies:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Fenohasina08/dart-taskmanagement.git
 cd dart-taskmanagement
 dart pub get
 ```
